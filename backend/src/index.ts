@@ -13,6 +13,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
+app.get('/', (_req, res) => {
+  res.json({ status: 'ok', message: 'Backend is running', docs: '/api/health' });
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Backend is running' });
 });
