@@ -6,18 +6,13 @@ import { router } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
 const inspiration = [
   { title: 'Try a scrape', desc: 'See what your homepage exposes in meta and headings.' },
   { title: 'Crawl ideas', desc: 'Follow links on a blog or docs to map the structure.' },
   { title: 'Link hygiene', desc: 'Check for duplicate or broken links across a site.' },
-];
-
-const quickLinks = [
-  { label: 'example.com', url: 'https://example.com' },
-  { label: 'Wikipedia JS', url: 'https://en.wikipedia.org/wiki/JavaScript' },
-  { label: 'HN', url: 'https://news.ycombinator.com' },
 ];
 
 export default function DiscoverScreen() {
@@ -29,6 +24,7 @@ export default function DiscoverScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ThemeToggle />
         <LinearGradient
           colors={[tint, '#7c3aed']}
           start={{ x: 0, y: 0 }}
@@ -41,20 +37,6 @@ export default function DiscoverScreen() {
           <ThemedText style={[styles.heroSubtitle, { color: '#e2e8f0' }]}>Scrape, crawl, and explore.</ThemedText>
           <ThemedText style={[styles.heroSubtitle, { color: '#e2e8f0' }]}>Pick a tool from the tabs.</ThemedText>
         </LinearGradient>
-
-        <ThemedView style={[styles.card, { borderColor: border }]}>
-          <ThemedText type="subtitle">Quick links</ThemedText>
-          <View style={styles.chipRow}>
-            {quickLinks.map((item) => (
-              <ThemedText key={item.url} style={styles.chip}>
-                {item.label}
-              </ThemedText>
-            ))}
-          </View>
-          <ThemedText style={{ color: muted, fontSize: 13 }}>
-            Use these in Scrape or Crawl to get a feel for results.
-          </ThemedText>
-        </ThemedView>
 
         <ThemedView style={[styles.card, { borderColor: border }]}>
           <ThemedText type="subtitle">Ideas</ThemedText>
@@ -110,22 +92,10 @@ const styles = StyleSheet.create({
     color: '#e2e8f0',
   },
   card: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: 12,
     padding: 14,
     gap: 8,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    backgroundColor: '#e2e8f0',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    overflow: 'hidden',
   },
   list: {
     gap: 10,

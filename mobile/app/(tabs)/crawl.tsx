@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -108,6 +109,7 @@ export default function CrawlScreen() {
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
+          <ThemeToggle />
           <View style={[styles.statusBar, { borderColor: border }]}>
             <View style={styles.statusRow}>
               <View
@@ -214,10 +216,11 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   statusBar: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: 12,
     padding: 12,
     gap: 4,
+    marginTop: 8,
   },
   statusRow: {
     flexDirection: 'row',
@@ -239,7 +242,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fbbf24',
   },
   card: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: 12,
     padding: 16,
     gap: 10,
@@ -268,13 +271,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   resultCard: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: 10,
     padding: 12,
     gap: 8,
   },
   url: {
     fontWeight: '700',
+  },
+  chipList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  chip: {
+    backgroundColor: 'rgba(226, 232, 240, 0.15)',
+    padding: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.5)',
   },
   row: {
     flexDirection: 'row',
@@ -286,7 +301,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pageItem: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderRadius: 8,
     padding: 10,
     marginTop: 8,
