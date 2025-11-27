@@ -238,6 +238,20 @@ button[type='submit']:hover:not(:disabled) {
   color: var(--muted);
 }
 
+.meta-grid {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.inline-code {
+  background: var(--code-bg);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
 .page-list {
   display: grid;
   gap: 10px;

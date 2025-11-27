@@ -40,7 +40,7 @@ Backend: http://localhost:4000/api/health
 - Scripts: `dev`, `build`, `start`.
 - API routes:
   - `/api/health`
-  - `/api/scrape` (POST with `url`)
+  - `/api/scrape` (POST with `url`; returns title, description, OG meta, text preview, headings, links)
   - `/api/crawl` (POST with `url`, optional `maxPages`, `maxDepth`, `sameDomain`)
 
 ## Notes

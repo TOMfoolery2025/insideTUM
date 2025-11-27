@@ -35,6 +35,10 @@ function App() {
     status?: number;
     title?: string;
     description?: string;
+    ogTitle?: string;
+    ogDescription?: string;
+    ogImage?: string;
+    textPreview?: string;
     headings?: string[];
     links?: string[];
     error?: string;
@@ -214,17 +218,40 @@ function App() {
                       {scrapeResult.status ? `HTTP ${scrapeResult.status}` : 'no status'}
                     </div>
                   </div>
-                  {scrapeResult.title ? (
-                    <div className="page-title">{scrapeResult.title}</div>
-                  ) : null}
-                  {scrapeResult.description ? (
-                    <div className="page-desc">{scrapeResult.description}</div>
-                  ) : null}
-                  {scrapeResult.headings?.length ? (
-                    <div className="headings">
-                      <strong>Headings:</strong>
-                      <ul>
-                        {scrapeResult.headings.map((h, idx) => (
+              {scrapeResult.title ? (
+                <div className="page-title">{scrapeResult.title}</div>
+              ) : null}
+              {scrapeResult.description ? (
+                <div className="page-desc">{scrapeResult.description}</div>
+              ) : null}
+              <div className="meta-grid">
+                {scrapeResult.ogTitle ? (
+                  <div>
+                    <strong>OG Title:</strong> {scrapeResult.ogTitle}
+                  </div>
+                ) : null}
+                {scrapeResult.ogDescription ? (
+                  <div>
+                    <strong>OG Description:</strong> {scrapeResult.ogDescription}
+                  </div>
+                ) : null}
+                {scrapeResult.ogImage ? (
+                  <div>
+                    <strong>OG Image:</strong>{' '}
+                    <code className="inline-code">{scrapeResult.ogImage}</code>
+                  </div>
+                ) : null}
+                {scrapeResult.textPreview ? (
+                  <div>
+                    <strong>Preview:</strong> {scrapeResult.textPreview}
+                  </div>
+                ) : null}
+              </div>
+              {scrapeResult.headings?.length ? (
+                <div className="headings">
+                  <strong>Headings:</strong>
+                  <ul>
+                    {scrapeResult.headings.map((h, idx) => (
                           <li key={`${h}-${idx}`}>{h}</li>
                         ))}
                       </ul>

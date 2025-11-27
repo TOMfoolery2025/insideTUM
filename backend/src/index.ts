@@ -31,6 +31,10 @@ type ScrapeResult = {
   status?: number;
   title?: string;
   description?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  textPreview?: string;
   headings: string[];
   links: string[];
   error?: string;
@@ -184,8 +188,14 @@ app.post('/api/scrape', async (req, res) => {
     }
 
     const $ = load(response.data);
+    const getMeta = (name: string) =>
+      $(`meta[name="${name}"]`).attr('content') || $(`meta[property="${name}"]`).attr('content');
+
     result.title = $('title').first().text().trim() || undefined;
-    result.description = $('meta[name="description"]').attr('content') || undefined;
+    result.description = getMeta('description') || undefined;
+    result.ogTitle = getMeta('og:title') || undefined;
+    result.ogDescription = getMeta('og:description') || undefined;
+    result.ogImage = getMeta('og:image') || undefined;
 
     const headings: string[] = [];
     $('h1, h2, h3')
@@ -195,6 +205,14 @@ app.post('/api/scrape', async (req, res) => {
         if (text) headings.push(text);
       });
     result.headings = headings;
+
+    const firstParagraph = $('p')
+      .map((_, el) => $(el).text().trim())
+      .get()
+      .find((text) => text.length > 40);
+    if (firstParagraph) {
+      result.textPreview = firstParagraph.slice(0, 280);
+    }
 
     const links: string[] = [];
     $('a[href]')
