@@ -1,5 +1,5 @@
 import axios from 'axios';
-import cheerio from 'cheerio';
+import { load } from 'cheerio';
 import cors from 'cors';
 import express from 'express';
 import { URL } from 'node:url';
@@ -89,7 +89,7 @@ async function crawl(startUrl: string, options: { maxPages: number; maxDepth: nu
         continue;
       }
 
-      const $ = cheerio.load(response.data);
+      const $ = load(response.data);
       page.title = $('title').first().text().trim() || undefined;
       page.description = $('meta[name="description"]').attr('content') || undefined;
 
