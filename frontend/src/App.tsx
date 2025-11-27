@@ -75,10 +75,7 @@ function App() {
 
   const handleCrawl = async (evt: FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
-    if (!crawlUrl.trim()) {
-      setCrawlError('Please enter a URL');
-      return;
-    }
+    const target = crawlUrl.trim() || 'https://example.com';
     setCrawlLoading(true);
     setCrawlError(null);
     setCrawlResult(null);
@@ -88,7 +85,7 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          url: crawlUrl.trim(),
+          url: target,
           maxPages,
           maxDepth,
           sameDomain,
@@ -112,10 +109,7 @@ function App() {
 
   const handleScrape = async (evt: FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
-    if (!scrapeUrl.trim()) {
-      setScrapeError('Please enter a URL');
-      return;
-    }
+    const target = scrapeUrl.trim() || 'https://example.com';
     setScrapeLoading(true);
     setScrapeError(null);
     setScrapeResult(null);
@@ -124,7 +118,7 @@ function App() {
       const response = await fetch(`${API_URL}/api/scrape`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: scrapeUrl.trim() }),
+        body: JSON.stringify({ url: target }),
       });
 
       if (!response.ok) {
