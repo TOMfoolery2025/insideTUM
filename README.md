@@ -38,7 +38,10 @@ Backend: http://localhost:4000/api/health
 - Express + TypeScript with `ts-node-dev` for hot reload.
 - CORS allows `http://localhost:5173` by default; override with `FRONTEND_ORIGIN` (comma-separated for multiples).
 - Scripts: `dev`, `build`, `start`.
-- API routes: `/api/health`, `/api/crawl` (POST with `url`, optional `maxPages`, `maxDepth`, `sameDomain`).
+- API routes:
+  - `/api/health`
+  - `/api/scrape` (POST with `url`)
+  - `/api/crawl` (POST with `url`, optional `maxPages`, `maxDepth`, `sameDomain`)
 
 ## Notes
 

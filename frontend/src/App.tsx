@@ -6,6 +6,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
+  const [statusOpen, setStatusOpen] = useState(false);
   const [crawlUrl, setCrawlUrl] = useState('');
   const [crawlResult, setCrawlResult] = useState<{
     startUrl: string;
@@ -26,6 +27,19 @@ function App() {
   const [maxPages, setMaxPages] = useState(5);
   const [maxDepth, setMaxDepth] = useState(1);
   const [sameDomain, setSameDomain] = useState(true);
+  const [scrapeUrl, setScrapeUrl] = useState('');
+  const [scrapeLoading, setScrapeLoading] = useState(false);
+  const [scrapeError, setScrapeError] = useState<string | null>(null);
+  const [scrapeResult, setScrapeResult] = useState<{
+    url: string;
+    status?: number;
+    title?: string;
+    description?: string;
+    headings?: string[];
+    links?: string[];
+    error?: string;
+  } | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -50,6 +64,10 @@ function App() {
 
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const handleCrawl = async (evt: FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
@@ -88,118 +106,241 @@ function App() {
     }
   };
 
+  const handleScrape = async (evt: FormEvent<HTMLFormElement>) => {
+    evt.preventDefault();
+    if (!scrapeUrl.trim()) {
+      setScrapeError('Please enter a URL');
+      return;
+    }
+    setScrapeLoading(true);
+    setScrapeError(null);
+    setScrapeResult(null);
+
+    try {
+      const response = await fetch(`${API_URL}/api/scrape`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: scrapeUrl.trim() }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `Request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setScrapeResult(data);
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'Scrape failed';
+      setScrapeError(reason);
+    } finally {
+      setScrapeLoading(false);
+    }
+  };
+
   return (
     <main className="app">
-      <div className="card">
-        <h1>Tomfoolery Hackathon</h1>
-        <p>Vite + React + TypeScript boilerplate.</p>
-        <div className="status">
-          <span className={`status-dot ${status}`} aria-label={`Backend status: ${status}`} />
-          <span className="label">Backend:</span>
-          <span className="value">{message || 'Loading...'}</span>
-        </div>
-        {error ? (
-          <div className="error">
-            <strong>Error:</strong> {error}
-            <div>API URL: {API_URL}</div>
-          </div>
-        ) : null}
-        <div className="meta">
-          <code>frontend</code> (Vercel)
-          <code>backend</code> (Railway)
-        </div>
-      </div>
-      <div className="card">
-        <h2>Mini Crawler</h2>
-        <p>Enter a URL to crawl. Limits keep it fast and polite.</p>
-        <form className="crawl-form" onSubmit={handleCrawl}>
-          <label className="field">
-            <span>Start URL</span>
-            <input
-              type="url"
-              placeholder="https://example.com"
-              value={crawlUrl}
-              onChange={(e) => setCrawlUrl(e.target.value)}
-              required
-            />
-          </label>
-          <div className="field-grid">
-            <label className="field">
-              <span>Max pages (1–20)</span>
-              <input
-                type="number"
-                min={1}
-                max={20}
-                value={maxPages}
-                onChange={(e) => setMaxPages(Number(e.target.value))}
-              />
-            </label>
-            <label className="field">
-              <span>Max depth (0–3)</span>
-              <input
-                type="number"
-                min={0}
-                max={3}
-                value={maxDepth}
-                onChange={(e) => setMaxDepth(Number(e.target.value))}
-              />
-            </label>
-          </div>
-          <label className="checkbox">
-            <input
-              type="checkbox"
-              checked={sameDomain}
-              onChange={(e) => setSameDomain(e.target.checked)}
-            />
-            <span>Stay on the same domain</span>
-          </label>
-          <button type="submit" disabled={crawlLoading}>
-            {crawlLoading ? 'Crawling...' : 'Start crawl'}
-          </button>
-        </form>
-        {crawlError ? (
-          <div className="error">
-            <strong>Crawl error:</strong> {crawlError}
-          </div>
-        ) : null}
-        {crawlResult ? (
-          <div className="crawl-results">
-            <div className="meta-line">
-              <code>{crawlResult.startUrl}</code>
-              <span>
-                pages: {crawlResult.pages.length}/{crawlResult.maxPages} • depth:{' '}
-                {crawlResult.maxDepth} • same domain: {crawlResult.sameDomain ? 'yes' : 'no'}
-              </span>
+      <div className="layout">
+        <div className="top-bar">
+          <button
+            type="button"
+            className={`status-toggle ${statusOpen ? 'open' : ''}`}
+            onClick={() => setStatusOpen((prev) => !prev)}
+            aria-expanded={statusOpen}
+          >
+            <div className="status">
+              <span className={`status-dot ${status}`} aria-label={`Backend status: ${status}`} />
+              <span className="label">Backend</span>
+              <span className="value">{message || 'Loading...'}</span>
             </div>
-            <div className="page-list">
-              {crawlResult.pages.map((page, idx) => (
-                <div className="page" key={`${page.url}-${idx}`}>
+            <span className="chevron">{statusOpen ? '▴' : '▾'}</span>
+          </button>
+          <div className="theme-toggle">
+            <span>Theme</span>
+            <button
+              type="button"
+              onClick={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? '🌞' : '🌙'}
+            </button>
+          </div>
+        </div>
+        {statusOpen ? (
+          <div className="status-details">
+            {error ? (
+              <div className="error compact">
+                <strong>Error:</strong> {error} • API: {API_URL}
+              </div>
+            ) : (
+              <div className="ok compact">Healthy</div>
+            )}
+            <div className="meta compact">
+              <code>frontend</code> (Vercel) • <code>backend</code> (Railway)
+            </div>
+          </div>
+        ) : null}
+
+        <div className="cards">
+          <div className="card">
+            <h2>Scrape a Page</h2>
+            <p>Extract title, description, headings, and links from a single page.</p>
+            <form className="crawl-form" onSubmit={handleScrape}>
+              <label className="field">
+                <span>URL</span>
+                <input
+                  type="url"
+                  placeholder="https://example.com"
+                  value={scrapeUrl}
+                  onChange={(e) => setScrapeUrl(e.target.value)}
+                  required
+                />
+              </label>
+              <button type="submit" disabled={scrapeLoading}>
+                {scrapeLoading ? 'Scraping...' : 'Scrape'}
+              </button>
+            </form>
+            {scrapeError ? (
+              <div className="error">
+                <strong>Scrape error:</strong> {scrapeError}
+              </div>
+            ) : null}
+            {scrapeResult ? (
+              <div className="scrape-results">
+                <div className="page">
                   <div className="page-header">
-                    <div className="page-url">{page.url}</div>
+                    <div className="page-url">{scrapeResult.url}</div>
                     <div className="page-status">
-                      {page.status ? `HTTP ${page.status}` : 'no status'}
+                      {scrapeResult.status ? `HTTP ${scrapeResult.status}` : 'no status'}
                     </div>
                   </div>
-                  {page.title ? <div className="page-title">{page.title}</div> : null}
-                  {page.description ? (
-                    <div className="page-desc">{page.description}</div>
+                  {scrapeResult.title ? (
+                    <div className="page-title">{scrapeResult.title}</div>
                   ) : null}
-                  {page.error ? <div className="page-error">Error: {page.error}</div> : null}
-                  {page.links?.length ? (
+                  {scrapeResult.description ? (
+                    <div className="page-desc">{scrapeResult.description}</div>
+                  ) : null}
+                  {scrapeResult.headings?.length ? (
+                    <div className="headings">
+                      <strong>Headings:</strong>
+                      <ul>
+                        {scrapeResult.headings.map((h, idx) => (
+                          <li key={`${h}-${idx}`}>{h}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {scrapeResult.links?.length ? (
                     <div className="links">
-                      {page.links.slice(0, 10).map((link) => (
+                      {scrapeResult.links.slice(0, 10).map((link) => (
                         <code key={link}>{link}</code>
                       ))}
-                      {page.links.length > 10 ? (
-                        <span className="more">+{page.links.length - 10} more</span>
+                      {scrapeResult.links.length > 10 ? (
+                        <span className="more">+{scrapeResult.links.length - 10} more</span>
                       ) : null}
                     </div>
                   ) : null}
+                  {scrapeResult.error ? (
+                    <div className="page-error">Error: {scrapeResult.error}</div>
+                  ) : null}
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+
+          <div className="card">
+            <h2>Mini Crawler</h2>
+            <p>Enter a URL to crawl. Limits keep it fast and polite.</p>
+            <form className="crawl-form" onSubmit={handleCrawl}>
+              <label className="field">
+                <span>Start URL</span>
+                <input
+                  type="url"
+                  placeholder="https://example.com"
+                  value={crawlUrl}
+                  onChange={(e) => setCrawlUrl(e.target.value)}
+                  required
+                />
+              </label>
+              <div className="field-grid">
+                <label className="field">
+                  <span>Max pages (1–20)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={maxPages}
+                    onChange={(e) => setMaxPages(Number(e.target.value))}
+                  />
+                </label>
+                <label className="field">
+                  <span>Max depth (0–3)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={3}
+                    value={maxDepth}
+                    onChange={(e) => setMaxDepth(Number(e.target.value))}
+                  />
+                </label>
+              </div>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={sameDomain}
+                  onChange={(e) => setSameDomain(e.target.checked)}
+                />
+                <span>Stay on the same domain</span>
+              </label>
+              <button type="submit" disabled={crawlLoading}>
+                {crawlLoading ? 'Crawling...' : 'Start crawl'}
+              </button>
+            </form>
+            {crawlError ? (
+              <div className="error">
+                <strong>Crawl error:</strong> {crawlError}
+              </div>
+            ) : null}
+            {crawlResult ? (
+              <div className="crawl-results">
+                <div className="meta-line">
+                  <code>{crawlResult.startUrl}</code>
+                  <span>
+                    pages: {crawlResult.pages.length}/{crawlResult.maxPages} • depth:{' '}
+                    {crawlResult.maxDepth} • same domain: {crawlResult.sameDomain ? 'yes' : 'no'}
+                  </span>
+                </div>
+                <div className="page-list">
+                  {crawlResult.pages.map((page, idx) => (
+                    <div className="page" key={`${page.url}-${idx}`}>
+                      <div className="page-header">
+                        <div className="page-url">{page.url}</div>
+                        <div className="page-status">
+                          {page.status ? `HTTP ${page.status}` : 'no status'}
+                        </div>
+                      </div>
+                      {page.title ? <div className="page-title">{page.title}</div> : null}
+                      {page.description ? (
+                        <div className="page-desc">{page.description}</div>
+                      ) : null}
+                      {page.error ? <div className="page-error">Error: {page.error}</div> : null}
+                      {page.links?.length ? (
+                        <div className="links">
+                          {page.links.slice(0, 10).map((link) => (
+                            <code key={link}>{link}</code>
+                          ))}
+                          {page.links.length > 10 ? (
+                            <span className="more">+{page.links.length - 10} more</span>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
       </div>
     </main>
   );

@@ -26,6 +26,16 @@ type CrawlPage = {
   error?: string;
 };
 
+type ScrapeResult = {
+  url: string;
+  status?: number;
+  title?: string;
+  description?: string;
+  headings: string[];
+  links: string[];
+  error?: string;
+};
+
 function isHttpUrl(value: string) {
   try {
     const parsed = new URL(value);
@@ -135,6 +145,77 @@ app.get('/', (_req, res) => {
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Backend is running' });
+});
+
+app.post('/api/scrape', async (req, res) => {
+  const { url } = req.body ?? {};
+
+  if (!url || typeof url !== 'string' || !isHttpUrl(url)) {
+    return res.status(400).json({ error: 'Invalid or missing URL' });
+  }
+
+  const target = normalizeUrl(url);
+  if (!target) {
+    return res.status(400).json({ error: 'Invalid URL' });
+  }
+
+  const result: ScrapeResult = {
+    url: target,
+    headings: [],
+    links: [],
+  };
+
+  try {
+    const response = await axios.get(target, {
+      headers: {
+        'User-Agent': USER_AGENT,
+        Accept: 'text/html,application/xhtml+xml',
+      },
+      timeout: 10000,
+      maxRedirects: 5,
+    });
+
+    result.status = response.status;
+    const contentType = response.headers['content-type'] || '';
+
+    if (!contentType.includes('text/html')) {
+      result.error = 'Skipped non-HTML response';
+      return res.json(result);
+    }
+
+    const $ = load(response.data);
+    result.title = $('title').first().text().trim() || undefined;
+    result.description = $('meta[name="description"]').attr('content') || undefined;
+
+    const headings: string[] = [];
+    $('h1, h2, h3')
+      .slice(0, 20)
+      .each((_, el) => {
+        const text = $(el).text().trim();
+        if (text) headings.push(text);
+      });
+    result.headings = headings;
+
+    const links: string[] = [];
+    $('a[href]')
+      .slice(0, 50)
+      .each((_, el) => {
+        const href = $(el).attr('href');
+        if (!href) return;
+        try {
+          const absolute = new URL(href, target).toString();
+          links.push(normalizeUrl(absolute) || absolute);
+        } catch {
+          return;
+        }
+      });
+    result.links = Array.from(new Set(links)).slice(0, 50);
+
+    return res.json(result);
+  } catch (err) {
+    result.error = err instanceof Error ? err.message : 'Request failed';
+    return res.status(500).json(result);
+  }
 });
 
 app.post('/api/crawl', async (req, res) => {
