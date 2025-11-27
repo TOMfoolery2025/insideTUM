@@ -70,10 +70,7 @@ export default function ScrapeScreen() {
   };
 
   const onScrape = async () => {
-    if (!scrapeUrl.trim()) {
-      setScrapeError('Enter a URL');
-      return;
-    }
+    const target = scrapeUrl.trim() || 'https://example.com';
     setScrapeLoading(true);
     setScrapeError(null);
     setScrapeResult(null);
@@ -81,7 +78,7 @@ export default function ScrapeScreen() {
       const response = await fetch(`${API_URL}/api/scrape`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: scrapeUrl.trim() }),
+        body: JSON.stringify({ url: target }),
       });
       if (!response.ok) {
         const text = await response.text();

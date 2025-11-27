@@ -67,10 +67,7 @@ export default function CrawlScreen() {
   }, []);
 
   const onCrawl = async () => {
-    if (!crawlUrl.trim()) {
-      setCrawlError('Enter a URL');
-      return;
-    }
+    const target = crawlUrl.trim() || 'https://example.com';
     setCrawlLoading(true);
     setCrawlError(null);
     setCrawlResult(null);
@@ -79,7 +76,7 @@ export default function CrawlScreen() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          url: crawlUrl.trim(),
+          url: target,
           maxPages,
           maxDepth,
           sameDomain,
