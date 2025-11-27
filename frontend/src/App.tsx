@@ -160,13 +160,12 @@ function App() {
             <span className="chevron">{statusOpen ? '▴' : '▾'}</span>
           </button>
           <div className="theme-toggle">
-            <span>Theme</span>
             <button
               type="button"
               onClick={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}
               aria-label="Toggle theme"
             >
-              {theme === 'light' ? '🌞' : '🌙'}
+              {theme === 'light' ? '🌙' : '🌞'}
             </button>
           </div>
         </div>
@@ -218,40 +217,40 @@ function App() {
                       {scrapeResult.status ? `HTTP ${scrapeResult.status}` : 'no status'}
                     </div>
                   </div>
-              {scrapeResult.title ? (
-                <div className="page-title">{scrapeResult.title}</div>
-              ) : null}
-              {scrapeResult.description ? (
-                <div className="page-desc">{scrapeResult.description}</div>
-              ) : null}
-              <div className="meta-grid">
-                {scrapeResult.ogTitle ? (
-                  <div>
-                    <strong>OG Title:</strong> {scrapeResult.ogTitle}
+                  {scrapeResult.title ? (
+                    <div className="page-title">{scrapeResult.title}</div>
+                  ) : null}
+                  {scrapeResult.description ? (
+                    <div className="page-desc">{scrapeResult.description}</div>
+                  ) : null}
+                  <div className="meta-grid">
+                    {scrapeResult.ogTitle ? (
+                      <div>
+                        <strong>OG Title:</strong> {scrapeResult.ogTitle}
+                      </div>
+                    ) : null}
+                    {scrapeResult.ogDescription ? (
+                      <div>
+                        <strong>OG Description:</strong> {scrapeResult.ogDescription}
+                      </div>
+                    ) : null}
+                    {scrapeResult.ogImage ? (
+                      <div>
+                        <strong>OG Image:</strong>{' '}
+                        <code className="inline-code">{scrapeResult.ogImage}</code>
+                      </div>
+                    ) : null}
+                    {scrapeResult.textPreview ? (
+                      <div>
+                        <strong>Preview:</strong> {scrapeResult.textPreview}
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-                {scrapeResult.ogDescription ? (
-                  <div>
-                    <strong>OG Description:</strong> {scrapeResult.ogDescription}
-                  </div>
-                ) : null}
-                {scrapeResult.ogImage ? (
-                  <div>
-                    <strong>OG Image:</strong>{' '}
-                    <code className="inline-code">{scrapeResult.ogImage}</code>
-                  </div>
-                ) : null}
-                {scrapeResult.textPreview ? (
-                  <div>
-                    <strong>Preview:</strong> {scrapeResult.textPreview}
-                  </div>
-                ) : null}
-              </div>
-              {scrapeResult.headings?.length ? (
-                <div className="headings">
-                  <strong>Headings:</strong>
-                  <ul>
-                    {scrapeResult.headings.map((h, idx) => (
+                  {scrapeResult.headings?.length ? (
+                    <div className="headings">
+                      <strong>Headings:</strong>
+                      <ul>
+                        {scrapeResult.headings.map((h, idx) => (
                           <li key={`${h}-${idx}`}>{h}</li>
                         ))}
                       </ul>
