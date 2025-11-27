@@ -16,6 +16,7 @@
   place-items: center;
   min-height: 100vh;
   padding: 24px;
+  gap: 16px;
 }
 
 .card {
@@ -71,6 +72,149 @@ p {
 
 .status-dot.error {
   background: #ef4444;
+}
+
+.crawl-form {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.field span {
+  font-weight: 600;
+}
+
+.field input[type='url'],
+.field input[type='number'] {
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.field-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.checkbox {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+}
+
+button[type='submit'] {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+}
+
+button[type='submit']:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+button[type='submit']:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.crawl-results {
+  display: grid;
+  gap: 12px;
+}
+
+.meta-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.page-list {
+  display: grid;
+  gap: 10px;
+}
+
+.page {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.page-url {
+  font-weight: 600;
+  color: #0f172a;
+  word-break: break-all;
+}
+
+.page-status {
+  background: #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.page-title {
+  margin-top: 6px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.page-desc {
+  margin-top: 4px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.page-error {
+  margin-top: 6px;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.links {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.links code {
+  background: #e2e8f0;
+}
+
+.more {
+  font-size: 12px;
+  color: #475569;
 }
 
 .meta {
