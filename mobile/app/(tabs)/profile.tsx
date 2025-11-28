@@ -47,7 +47,7 @@ export default function ProfileScreen() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [tumId, setTumId] = useState('');
-  const [faculty, setFaculty] = useState('');
+  const [faculty, setFaculty] = useState<'CIT' | 'SOM' | ''>('');
   const [submitting, setSubmitting] = useState(false);
 
   const accent = useThemeColor({}, 'tint');
@@ -107,6 +107,10 @@ export default function ProfileScreen() {
       setAuthError('Enter your TUM email and full name.');
       return;
     }
+    if (!faculty) {
+      setAuthError('Select faculty.');
+      return;
+    }
 
     setSubmitting(true);
     setAuthError(null);
@@ -118,7 +122,7 @@ export default function ProfileScreen() {
           email: safeEmail,
           fullName: safeName,
           tumId: tumId.trim() || null,
-          faculty: faculty.trim() || null,
+          faculty,
         }),
       });
       if (!response.ok) {
@@ -129,6 +133,7 @@ export default function ProfileScreen() {
       setToken(data.token);
       setUser(data.user);
       await SecureStore.setItemAsync(TOKEN_KEY, data.token);
+      await fetchProfile(data.token);
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -179,18 +184,26 @@ export default function ProfileScreen() {
                 onChangeText={setTumId}
                 autoCapitalize="none"
               />
-              <TextInput
-                style={[styles.input, { borderColor: border, color: text }]}
-                placeholder="Faculty (optional)"
-                placeholderTextColor={muted}
-                value={faculty}
-                onChangeText={setFaculty}
-              />
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: accent }]}
-                onPress={onLogin}
-                disabled={submitting}
-              >
+            <ThemedText style={{ color: muted }}>Select faculty</ThemedText>
+            <View style={styles.chipRow}>
+              {(['CIT', 'SOM'] as const).map((f) => (
+                <TouchableOpacity
+                  key={f}
+                  style={[
+                    styles.chip,
+                    { borderColor: border, backgroundColor: faculty === f ? accent : 'transparent' },
+                  ]}
+                  onPress={() => setFaculty(f)}
+                >
+                  <ThemedText style={{ color: faculty === f ? '#f8fafc' : text }}>{f}</ThemedText>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: accent }]}
+              onPress={onLogin}
+              disabled={submitting}
+            >
                 {submitting ? (
                   <ActivityIndicator color="#f8fafc" />
                 ) : (
@@ -234,7 +247,7 @@ export default function ProfileScreen() {
               {user.fullName}
             </ThemedText>
             <ThemedText style={{ color: '#e2e8f0' }}>{user.faculty || 'Faculty not set'}</ThemedText>
-            <ThemedText style={{ color: '#e2e8f0' }}>{user.tumId || 'Program not set'}</ThemedText>
+            <ThemedText style={{ color: '#e2e8f0' }}>{user.tumId || 'ID not set'}</ThemedText>
           </View>
         </LinearGradient>
 
@@ -378,6 +391,17 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#f8fafc',
     fontWeight: '700',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   error: {
     marginTop: 6,

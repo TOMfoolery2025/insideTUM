@@ -18,12 +18,17 @@ enum AuthProvider {
   tum
 }
 
+enum Faculty {
+  CIT
+  SOM
+}
+
 model User {
   id           String       @id @default(uuid())
   tumId        String?
   email        String       @unique
   fullName     String
-  faculty      String?
+  faculty      Faculty?
   semester     Int?
   profileSlug  String       @unique
   authProvider AuthProvider

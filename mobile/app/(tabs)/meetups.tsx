@@ -185,7 +185,18 @@ export default function MeetupsScreen() {
             <Feather name="users" size={20} color={accent} />
             <ThemedText type="title">Meetups</ThemedText>
           </View>
-          <TouchableOpacity style={[styles.createBtn, { backgroundColor: accent }]} onPress={() => setShowCreate((prev) => !prev)}>
+          <TouchableOpacity
+            style={[styles.createBtn, { backgroundColor: accent }]}
+            onPress={() => {
+              setShowCreate((prev) => {
+                const next = !prev;
+                if (!next) {
+                  resetForm();
+                }
+                return next;
+              });
+            }}
+          >
             <Feather name="plus" size={14} color="#f8fafc" />
             <ThemedText style={{ color: '#f8fafc', fontWeight: '700', fontSize: 12 }}>
               {showCreate ? 'Close' : editingId ? 'Edit' : 'Create'}

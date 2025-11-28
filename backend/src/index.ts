@@ -1,4 +1,4 @@
-import { PrismaClient, User, PostCategory, MeetupCategory } from '../prisma/generated/client';
+import { PrismaClient, User, PostCategory, MeetupCategory, Faculty } from '../prisma/generated/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import axios from 'axios';
@@ -25,6 +25,7 @@ const prisma = new PrismaClient({ adapter });
 const allowedOrigins = FRONTEND_ORIGIN.split(',').map((origin) => origin.trim());
 const ALLOWED_CATEGORIES: PostCategory[] = ['market', 'qa', 'discussion'];
 const ALLOWED_MEETUPS: MeetupCategory[] = ['hike', 'bike', 'food', 'code', 'study', 'social'];
+const FACULTIES: Faculty[] = ['CIT', 'SOM'];
 
 app.use(cors({
   origin: allowedOrigins,
@@ -385,6 +386,10 @@ app.post('/auth/mock-login', async (req, res) => {
     semester === undefined || semester === null || semester === ''
       ? null
       : Number(semester);
+  const facultyValue =
+    typeof faculty === 'string' && FACULTIES.includes(faculty.trim().toUpperCase() as Faculty)
+      ? (faculty.trim().toUpperCase() as Faculty)
+      : null;
 
   try {
     const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -397,7 +402,7 @@ app.post('/auth/mock-login', async (req, res) => {
           email: normalizedEmail,
           fullName: fullName.trim(),
           tumId: tumId ? String(tumId) : null,
-          faculty: faculty ? String(faculty) : null,
+          faculty: facultyValue,
           semester: parsedSemester,
           profileSlug: await getUniqueSlug(fullName),
           authProvider: 'mock',
@@ -409,7 +414,7 @@ app.post('/auth/mock-login', async (req, res) => {
         data: {
           fullName: fullName.trim(),
           tumId: tumId ? String(tumId) : null,
-          faculty: faculty ? String(faculty) : null,
+          faculty: facultyValue,
           semester: parsedSemester,
         },
       });

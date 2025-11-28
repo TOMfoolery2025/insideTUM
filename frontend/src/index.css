@@ -205,6 +205,14 @@ p {
   background: var(--card);
   color: var(--text);
 }
+.field select {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  background: var(--card);
+  color: var(--text);
+}
 
 button[type='submit'] {
   background: linear-gradient(135deg, var(--accent), #1d4ed8);

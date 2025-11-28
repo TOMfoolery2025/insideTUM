@@ -102,6 +102,9 @@ function AuthProvider({ children }: { children: ReactNode }) {
       if (!safeEmail || !safeName) {
         throw new Error('Please enter your email and full name.');
       }
+      if (faculty && !['CIT', 'SOM'].includes(faculty)) {
+        throw new Error('Select a valid faculty.');
+      }
 
       const response = await fetch(`${API_URL}/auth/mock-login`, {
         method: 'POST',
@@ -110,7 +113,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
           email: safeEmail,
           fullName: safeName,
           tumId: tumId?.trim() || null,
-          faculty: faculty?.trim() || null,
+          faculty: faculty || null,
         }),
       });
 
@@ -255,9 +258,13 @@ function LoginPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [tumId, setTumId] = useState('');
-  const [faculty, setFaculty] = useState('');
+  const [faculty, setFaculty] = useState<'CIT' | 'SOM' | ''>('');
   const [submitting, setSubmitting] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const PROGRAMS: Record<'CIT' | 'SOM', string[]> = {
+    CIT: ['CIT_CS', 'CIT_AI', 'CIT_EE'],
+    SOM: ['SOM_MGMT', 'SOM_FIN', 'SOM_ECON'],
+  };
 
   useEffect(() => {
     if (user) {
@@ -322,13 +329,12 @@ function LoginPage() {
             />
           </label>
           <label className="field">
-            <span>Faculty (optional)</span>
-            <input
-              type="text"
-              placeholder="CIT, SOM, MW, EDU…"
-              value={faculty}
-              onChange={(e) => setFaculty(e.target.value)}
-            />
+            <span>Faculty</span>
+            <select value={faculty} onChange={(e) => { const val = e.target.value as 'CIT' | 'SOM' | ''; setFaculty(val); setProgram(''); }} required>
+              <option value="">Select faculty</option>
+              <option value="CIT">CIT</option>
+              <option value="SOM">SOM</option>
+            </select>
           </label>
           <button type="submit" disabled={submitting}>
             {submitting ? 'Signing in…' : 'Login with TUM (Prototype)'}
