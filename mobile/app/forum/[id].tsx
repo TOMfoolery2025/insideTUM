@@ -12,6 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import { router, useLocalSearchParams } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -46,6 +48,7 @@ export default function ForumDetailScreen() {
   const muted = useThemeColor({ light: '#475569', dark: '#94a3b8' }, 'text');
   const text = useThemeColor({}, 'text');
   const accent = useThemeColor({}, 'tint');
+  const card = useThemeColor({}, 'card');
 
   const [tokenChecked, setTokenChecked] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -144,20 +147,30 @@ export default function ForumDetailScreen() {
   if (!tokenChecked) return null;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: card }]} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 24 : 0}
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <ThemedText style={{ fontSize: 18 }}>‹ Back</ThemedText>
-            </TouchableOpacity>
-            <ThemedText type="title">Post</ThemedText>
-            <View style={{ width: 60 }} />
-          </View>
+          <LinearGradient
+            colors={['#e0e7ff', '#ede9fe']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
+          >
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                <Feather name="arrow-left" size={18} color="#4338ca" />
+                <ThemedText style={{ color: '#4338ca', fontWeight: '700' }}>Back</ThemedText>
+              </TouchableOpacity>
+              <ThemedText type="title" style={{ color: '#312e81' }}>
+                Post
+              </ThemedText>
+              <View style={{ width: 60 }} />
+            </View>
+          </LinearGradient>
 
           {loading ? (
             <View style={styles.loading}>
@@ -169,14 +182,25 @@ export default function ForumDetailScreen() {
           ) : post ? (
             <>
               <View style={[styles.card, { borderColor: border }]}>
-                <View style={styles.rowBetween}>
-                  <ThemedText style={styles.category}>{post.category}</ThemedText>
-                  <ThemedText style={{ color: muted }}>{relativeTime(post.createdAt)}</ThemedText>
+                <View style={styles.postHeader}>
+                  <View style={styles.avatar}>
+                    <ThemedText style={{ color: '#0f172a', fontWeight: '800' }}>
+                      {post.author.fullName?.slice(0, 1).toUpperCase() || 'T'}
+                    </ThemedText>
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <ThemedText style={{ fontWeight: '700' }}>{post.author.fullName}</ThemedText>
+                    <ThemedText style={{ color: muted, fontSize: 12 }}>{relativeTime(post.createdAt)}</ThemedText>
+                  </View>
+                  <View style={styles.tag}>
+                    <ThemedText style={{ color: '#4338ca', fontWeight: '700', fontSize: 11 }}>
+                      {post.category}
+                    </ThemedText>
+                  </View>
                 </View>
                 <ThemedText type="title">{post.title}</ThemedText>
                 <ThemedText style={{ color: muted }}>{post.body}</ThemedText>
                 <View style={styles.rowBetween}>
-                  <ThemedText style={{ color: muted }}>{post.author.fullName}</ThemedText>
                   <ThemedText style={{ color: muted }}>{post.commentsCount} comments</ThemedText>
                 </View>
               </View>
@@ -186,9 +210,11 @@ export default function ForumDetailScreen() {
                 <View style={styles.comments}>
                   {post.comments.map((c) => (
                     <View key={c.id} style={[styles.commentItem, { borderColor: border }]}>
-                      <ThemedText style={{ color: muted }}>{c.author.fullName}</ThemedText>
+                      <View style={styles.commentHeader}>
+                        <ThemedText style={{ fontWeight: '700' }}>{c.author.fullName}</ThemedText>
+                        <ThemedText style={{ color: muted, fontSize: 11 }}>{relativeTime(c.createdAt)}</ThemedText>
+                      </View>
                       <ThemedText>{c.body}</ThemedText>
-                      <ThemedText style={{ color: muted, fontSize: 12 }}>{relativeTime(c.createdAt)}</ThemedText>
                     </View>
                   ))}
                   {post.comments.length === 0 ? (
@@ -226,10 +252,20 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   flex: { flex: 1 },
   content: { padding: 16, gap: 12, paddingBottom: 32 },
+  hero: {
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 8,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   loading: {
     alignItems: 'center',
@@ -241,16 +277,40 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     gap: 8,
+    backgroundColor: '#fff',
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
   rowBetween: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  postHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  avatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#e0e7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   category: {
     textTransform: 'uppercase',
     letterSpacing: 0.08,
     fontSize: 12,
     fontWeight: '700',
+  },
+  tag: {
+    backgroundColor: '#ede9fe',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
   },
   comments: {
     gap: 8,
@@ -260,6 +320,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     gap: 4,
+    backgroundColor: '#f8fafc',
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   input: {
     borderWidth: 1.2,

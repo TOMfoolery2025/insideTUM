@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -79,15 +80,25 @@ export default function SettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: card }]} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <ThemedText style={{ fontSize: 18 }}>‹ Back</ThemedText>
-          </TouchableOpacity>
-          <ThemedText type="title">Settings</ThemedText>
-          <View style={{ width: 60 }} />
-        </View>
+        <LinearGradient
+          colors={['#0ea5e9', '#6366f1', '#a855f7']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <ThemedText style={{ fontSize: 18, color: '#f8fafc' }}>‹ Back</ThemedText>
+            </TouchableOpacity>
+            <ThemedText type="title" style={{ color: '#f8fafc' }}>
+              Settings
+            </ThemedText>
+            <View style={{ width: 60 }} />
+          </View>
+          <ThemedText style={{ color: '#e2e8f0' }}>Personalize your experience.</ThemedText>
+        </LinearGradient>
 
         <View style={[styles.card, { borderColor: border }]}>
           <ThemedText type="subtitle">Appearance</ThemedText>
@@ -116,6 +127,11 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   content: { padding: 16, gap: 12, paddingBottom: 32 },
+  hero: {
+    borderRadius: 18,
+    padding: 16,
+    gap: 8,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

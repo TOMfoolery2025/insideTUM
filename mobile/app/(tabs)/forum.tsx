@@ -3,6 +3,8 @@ import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } fro
 import * as SecureStore from 'expo-secure-store';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -90,8 +92,8 @@ export default function ForumScreen() {
   const categories = useMemo(
     () => [
       { key: 'all', label: 'All' },
-      { key: 'market', label: 'Market' },
-      { key: 'qa', label: 'Q&A' },
+      { key: 'market', label: 'Marketplace' },
+      { key: 'qa', label: 'Academic Q&A' },
       { key: 'discussion', label: 'Discussion' },
     ] as const,
     [],
@@ -125,23 +127,46 @@ export default function ForumScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <ThemedText type="title">Forum</ThemedText>
-          <TouchableOpacity style={[styles.plus, { backgroundColor: accent }]} onPress={() => router.push('/forum/new')}>
-            <ThemedText style={{ color: '#f8fafc', fontWeight: '800', fontSize: 18 }}>+</ThemedText>
-          </TouchableOpacity>
-        </View>
+        <LinearGradient
+          colors={['#e0e7ff', '#ede9fe']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <View style={styles.heroInner}>
+            <View style={{ gap: 6 }}>
+              <ThemedText type="title" style={{ color: '#312e81' }}>
+                Student Forum 💬
+              </ThemedText>
+              <ThemedText style={{ color: '#4338ca' }}>
+                Discuss, trade, and connect with peers.
+              </ThemedText>
+              <View style={styles.heroActions}>
+                <TouchableOpacity style={styles.searchBtn}>
+                  <Feather name="search" size={14} color="#4f46e5" />
+                  <ThemedText style={{ color: '#4f46e5', fontWeight: '700', fontSize: 12 }}>Search</ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.newPostBtn} onPress={() => router.push('/forum/new')}>
+                  <Feather name="message-square" size={14} color="#f8fafc" />
+                  <ThemedText style={{ color: '#f8fafc', fontWeight: '700', fontSize: 12 }}>New Post</ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <Feather name="users" size={32} color="#4338ca" />
+          </View>
+        </LinearGradient>
+
         <View style={styles.chips}>
           {categories.map((c) => (
             <TouchableOpacity
               key={c.key}
               style={[
                 styles.chip,
-                { borderColor: border, backgroundColor: category === c.key ? accent : 'transparent' },
+                { borderColor: border, backgroundColor: category === c.key ? '#0f172a' : '#fff' },
               ]}
               onPress={() => setCategory(c.key)}
             >
-              <ThemedText style={{ color: category === c.key ? '#f8fafc' : muted }}>{c.label}</ThemedText>
+              <ThemedText style={{ color: category === c.key ? '#fff' : '#475569', fontWeight: '700' }}>{c.label}</ThemedText>
             </TouchableOpacity>
           ))}
         </View>
@@ -160,20 +185,37 @@ export default function ForumScreen() {
             {posts.map((post) => (
               <TouchableOpacity
                 key={post.id}
-                style={[styles.card, { borderColor: border }]}
+                style={[styles.card, { borderColor: border, backgroundColor: card }]}
                 onPress={() => router.push(`/forum/${post.id}`)}
+                activeOpacity={0.9}
               >
-                <View style={styles.cardHeader}>
-                  <ThemedText style={styles.category}>{post.category}</ThemedText>
-                  <ThemedText style={{ color: muted }}>{relativeTime(post.createdAt)}</ThemedText>
+                <View style={styles.postHeader}>
+                  <View style={styles.avatarCircle}>
+                    <ThemedText style={{ color: '#0f172a', fontWeight: '800' }}>
+                      {post.author.fullName?.slice(0, 1).toUpperCase() || 'T'}
+                    </ThemedText>
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <ThemedText style={{ fontWeight: '700' }}>{post.author.fullName}</ThemedText>
+                    <ThemedText style={{ color: muted, fontSize: 12 }}>{relativeTime(post.createdAt)}</ThemedText>
+                  </View>
+                  <View style={styles.tag}>
+                    <ThemedText style={{ color: '#4338ca', fontWeight: '700', fontSize: 11 }}>
+                      {post.category}
+                    </ThemedText>
+                  </View>
                 </View>
-                <ThemedText type="defaultSemiBold">{post.title}</ThemedText>
-                <ThemedText style={{ color: muted }}>
-                  {post.body.length > 120 ? `${post.body.slice(0, 120)}…` : post.body}
+                <ThemedText type="defaultSemiBold" style={styles.cardTitle}>{post.title}</ThemedText>
+                <ThemedText style={{ color: muted }} numberOfLines={2}>
+                  {post.body}
                 </ThemedText>
-                <View style={styles.meta}>
-                  <ThemedText style={{ color: muted }}>{post.author.fullName}</ThemedText>
-                  <ThemedText style={{ color: muted }}>{post.commentsCount} comments</ThemedText>
+                <View style={styles.postMeta}>
+                  <View style={styles.metaLeft}>
+                    <Feather name="heart" size={14} color={muted} />
+                    <Feather name="message-circle" size={14} color={muted} />
+                    <ThemedText style={{ color: muted, fontSize: 12 }}>{post.commentsCount} comments</ThemedText>
+                  </View>
+                  <Feather name="chevron-right" size={16} color={muted} />
                 </View>
               </TouchableOpacity>
             ))}
@@ -190,6 +232,54 @@ export default function ForumScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   content: { padding: 16, gap: 12, paddingBottom: 32 },
+  hero: {
+    borderRadius: 16,
+    padding: 16,
+    gap: 10,
+  },
+  heroInner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  heroPills: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  heroPill: {
+    backgroundColor: '#f8fafc',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  heroActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+  },
+  searchBtn: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  newPostBtn: {
+    backgroundColor: '#4f46e5',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -211,10 +301,32 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     gap: 6,
+    backgroundColor: '#fff',
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  postHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  avatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#e0e7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   category: {
     textTransform: 'uppercase',
@@ -222,9 +334,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  tag: {
+    backgroundColor: '#ede9fe',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
   meta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  postMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  metaLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  metaPill: {
+    backgroundColor: '#ede9fe',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
   },
   list: {
     gap: 10,

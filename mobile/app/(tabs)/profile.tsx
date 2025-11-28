@@ -11,6 +11,7 @@ import * as SecureStore from 'expo-secure-store';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -50,10 +51,10 @@ export default function ProfileScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   const accent = useThemeColor({}, 'tint');
-  const border = useThemeColor({}, 'border');
   const text = useThemeColor({}, 'text');
   const muted = useThemeColor({ light: '#475569', dark: '#94a3b8' }, 'text');
   const card = useThemeColor({}, 'card');
+  const border = useThemeColor({}, 'border');
 
   useEffect(() => {
     (async () => {
@@ -207,38 +208,49 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: card }]} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.headerRow}>
-          <ThemedText type="title">Profile</ThemedText>
+        <LinearGradient
+          colors={['#0ea5e9', '#6366f1', '#a855f7']}
+          start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.hero}
+      >
+        <View style={styles.heroHeader}>
           <TouchableOpacity onPress={() => router.push('/settings')}>
-            <ThemedText style={{ fontSize: 22 }}>⚙️</ThemedText>
+            <ThemedText style={{ fontSize: 22, color: '#f8fafc' }}>⚙️</ThemedText>
           </TouchableOpacity>
         </View>
-
-        <View style={[styles.card, { borderColor: border }]}>
-          <View style={styles.profileRow}>
-            <View style={styles.avatarWrap}>
-              <Image
-                source={{ uri: avatarUri }}
-                style={styles.avatar}
-                contentFit="cover"
-              />
-              <View style={styles.initials}>
-                <ThemedText type="defaultSemiBold" style={{ color: '#0f172a' }}>
+        <View style={styles.heroProfile}>
+          <View style={styles.avatarWrap}>
+            <Image source={{ uri: avatarUri }} style={styles.avatar} contentFit="cover" />
+            <View style={styles.initials}>
+              <ThemedText type="defaultSemiBold" style={{ color: '#0f172a' }}>
                   {initials}
                 </ThemedText>
               </View>
             </View>
-            <View style={{ flex: 1, gap: 6 }}>
-              <ThemedText type="title">{user.fullName}</ThemedText>
-              <ThemedText style={{ color: muted }}>{user.faculty || 'Faculty not set'}</ThemedText>
-              <ThemedText style={{ color: muted }}>{user.tumId || 'Program not set'}</ThemedText>
-            </View>
+            <ThemedText type="title" style={{ color: '#f8fafc', textAlign: 'center' }}>
+              {user.fullName}
+            </ThemedText>
+            <ThemedText style={{ color: '#e2e8f0' }}>{user.faculty || 'Faculty not set'}</ThemedText>
+            <ThemedText style={{ color: '#e2e8f0' }}>{user.tumId || 'Program not set'}</ThemedText>
+          </View>
+        </LinearGradient>
+
+        <View style={[styles.statsCard, { borderColor: border, backgroundColor: '#fff' }]}>
+          <View style={{ gap: 2 }}>
+            <ThemedText style={{ fontSize: 12, color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>
+              Campus Points
+            </ThemedText>
+            <ThemedText style={{ fontSize: 24, fontWeight: '900', color: '#4f46e5' }}>1,250 XP</ThemedText>
+          </View>
+          <View style={styles.trophy}>
+            <ThemedText style={{ fontSize: 20 }}>🏆</ThemedText>
           </View>
         </View>
 
-        <View style={[styles.card, { borderColor: border }]}>
+        <View style={[styles.card, { borderColor: border, backgroundColor: card }]}>
           <View style={styles.sectionHeader}>
             <ThemedText type="subtitle">Recent activity</ThemedText>
           </View>
@@ -264,11 +276,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  hero: {
+    borderRadius: 18,
+    padding: 16,
+    gap: 12,
+  },
+  heroProfile: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  heroHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
   card: {
     borderWidth: 1.5,
     borderRadius: 12,
     padding: 14,
     gap: 10,
+    backgroundColor: '#fff',
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
   },
   profileRow: {
     flexDirection: 'row',
@@ -308,6 +339,27 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     gap: 4,
+  },
+  statsCard: {
+    borderWidth: 1.5,
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  trophy: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#eef2ff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   form: {
     gap: 10,

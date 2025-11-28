@@ -17,10 +17,10 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
       }}>
       <Tabs.Screen
-        name="events"
+        name="home"
         options={{
-          title: 'Events',
-          tabBarIcon: ({ color }) => <Feather name="calendar" size={24} color={color} />,
+          title: 'Home',
+          tabBarIcon: ({ color }) => <Feather name="home" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -28,6 +28,13 @@ export default function TabLayout() {
         options={{
           title: 'Forum',
           tabBarIcon: ({ color }) => <Feather name="message-circle" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Messages',
+          tabBarIcon: ({ color }) => <Feather name="mail" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
