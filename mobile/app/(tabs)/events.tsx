@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as Linking from 'expo-linking';
 
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
-const placeholderEvents = [
-  { title: 'TUM Hack Night', date: 'Dec 12, 19:00', location: 'Garching Campus' },
-  { title: 'AI & ML Meetup', date: 'Dec 15, 18:30', location: 'Munich City Campus' },
-  { title: 'Founders Friday', date: 'Dec 19, 17:00', location: 'Startup Hub' },
-];
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+type TumEvent = {
+  title: string;
+  date?: string;
+  url?: string;
+};
 
 export default function EventsScreen() {
   const router = useRouter();
@@ -22,6 +25,9 @@ export default function EventsScreen() {
 
   const [tokenChecked, setTokenChecked] = useState(false);
   const [hasToken, setHasToken] = useState(false);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [events, setEvents] = useState<TumEvent[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -30,6 +36,37 @@ export default function EventsScreen() {
       setTokenChecked(true);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!hasToken) return;
+    const fetchEvents = async () => {
+      setLoadingEvents(true);
+      setError(null);
+      try {
+        const response = await fetch(`${API_URL}/api/tum-events`);
+        if (!response.ok) {
+          const textResp = await response.text();
+          throw new Error(textResp || `HTTP ${response.status}`);
+        }
+        const data = (await response.json()) as { events: TumEvent[] };
+        setEvents(data.events ?? []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load events');
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+    fetchEvents();
+  }, [hasToken]);
+
+  const onOpen = async (url?: string) => {
+    if (!url) return;
+    try {
+      await Linking.openURL(url);
+    } catch {
+      return;
+    }
+  };
 
   if (!tokenChecked) {
     return (
@@ -65,16 +102,37 @@ export default function EventsScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ThemedText type="title">Events</ThemedText>
-        <ThemedText style={{ color: muted }}>Upcoming meetups and sessions for TUM students.</ThemedText>
-        <View style={styles.list}>
-          {placeholderEvents.map((event) => (
-            <View key={event.title} style={[styles.card, { borderColor: border }]}>
-              <ThemedText type="defaultSemiBold">{event.title}</ThemedText>
-              <ThemedText style={{ color: muted }}>{event.date}</ThemedText>
-              <ThemedText style={{ color: muted }}>{event.location}</ThemedText>
-            </View>
-          ))}
-        </View>
+        <ThemedText style={{ color: muted }}>Closest events pulled from TUM.</ThemedText>
+        {loadingEvents ? (
+          <View style={styles.loading}>
+            <ActivityIndicator color={accent} />
+            <ThemedText style={{ color: muted }}>Loading events…</ThemedText>
+          </View>
+        ) : error ? (
+          <View style={[styles.card, { borderColor: border }]}>
+            <ThemedText style={{ color: '#b91c1c' }}>Error: {error}</ThemedText>
+          </View>
+        ) : (
+          <View style={styles.list}>
+            {events.map((event) => (
+              <TouchableOpacity
+                key={event.title}
+                style={[styles.card, { borderColor: border }]}
+                onPress={() => onOpen(event.url)}
+                activeOpacity={event.url ? 0.7 : 1}
+              >
+                <ThemedText type="defaultSemiBold">{event.title}</ThemedText>
+                {event.date ? <ThemedText style={{ color: muted }}>{event.date}</ThemedText> : null}
+                {event.url ? (
+                  <ThemedText style={{ color: accent, fontSize: 12 }}>{event.url}</ThemedText>
+                ) : null}
+              </TouchableOpacity>
+            ))}
+            {events.length === 0 ? (
+              <ThemedText style={{ color: muted }}>No events found.</ThemedText>
+            ) : null}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

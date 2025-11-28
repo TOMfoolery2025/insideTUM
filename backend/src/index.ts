@@ -63,12 +63,27 @@ type ScrapeResult = {
   error?: string;
 };
 
+type TumEvent = {
+  title: string;
+  date?: string;
+  url?: string;
+};
+
 function isHttpUrl(value: string) {
   try {
     const parsed = new URL(value);
     return parsed.protocol === 'http:' || parsed.protocol === 'https:';
   } catch {
     return false;
+  }
+}
+
+function toAbsoluteUrl(href: string | undefined, base: string) {
+  if (!href) return undefined;
+  try {
+    return new URL(href, base).toString();
+  } catch {
+    return undefined;
   }
 }
 
@@ -239,6 +254,53 @@ app.get('/', (_req, res) => {
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Backend is running' });
+});
+
+app.get('/api/tum-events', async (_req, res) => {
+  const EVENTS_URL = 'https://chn.tum.de/events';
+  try {
+    const response = await axios.get(EVENTS_URL, {
+      headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml' },
+      timeout: 10000,
+    });
+    const $ = load(response.data);
+    const events: TumEvent[] = [];
+
+    $('article, li, .event, .event-item')
+      .slice(0, 15)
+      .each((_, el) => {
+        if (events.length >= 5) return;
+        const container = $(el);
+        const title =
+          container.find('h3').first().text().trim() ||
+          container.find('h2').first().text().trim() ||
+          container.find('a').first().text().trim();
+        if (!title) return;
+
+        const date =
+          container.find('time').attr('datetime') ||
+          container.find('time').text().trim() ||
+          container.find('.date').first().text().trim() ||
+          undefined;
+
+        const href = container.find('a').first().attr('href');
+
+        events.push({
+          title,
+          date,
+          url: toAbsoluteUrl(href, EVENTS_URL),
+        });
+      });
+
+    return res.json({
+      source: EVENTS_URL,
+      count: events.length,
+      events: events.slice(0, 5),
+    });
+  } catch (err) {
+    console.error('Failed to fetch TUM events', err);
+    return res.status(500).json({ error: 'Failed to fetch TUM events' });
+  }
 });
 
 app.post('/auth/mock-login', async (req, res) => {
