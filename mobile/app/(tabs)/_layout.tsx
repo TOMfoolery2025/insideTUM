@@ -17,24 +17,24 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
       }}>
       <Tabs.Screen
-        name="discover"
+        name="events"
         options={{
-          title: 'Discover',
-          tabBarIcon: ({ color }) => <Feather name="compass" size={24} color={color} />,
+          title: 'Events',
+          tabBarIcon: ({ color }) => <Feather name="calendar" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="index"
+        name="forum"
         options={{
-          title: 'Scrape',
-          tabBarIcon: ({ color }) => <Feather name="search" size={24} color={color} />,
+          title: 'Forum',
+          tabBarIcon: ({ color }) => <Feather name="message-circle" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="crawl"
+        name="profile"
         options={{
-          title: 'Crawl',
-          tabBarIcon: ({ color }) => <Feather name="git-merge" size={24} color={color} />,
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <Feather name="user" size={24} color={color} />,
         }}
       />
     </Tabs>
