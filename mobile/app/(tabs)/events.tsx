@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
+import { Image } from 'expo-image';
 
 import { ThemedText } from '@/components/themed-text';
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -14,6 +15,7 @@ type TumEvent = {
   title: string;
   date?: string;
   url?: string;
+  image?: string;
 };
 
 export default function EventsScreen() {
@@ -121,11 +123,23 @@ export default function EventsScreen() {
                 onPress={() => onOpen(event.url)}
                 activeOpacity={event.url ? 0.7 : 1}
               >
-                <ThemedText type="defaultSemiBold">{event.title}</ThemedText>
-                {event.date ? <ThemedText style={{ color: muted }}>{event.date}</ThemedText> : null}
-                {event.url ? (
-                  <ThemedText style={{ color: accent, fontSize: 12 }}>{event.url}</ThemedText>
-                ) : null}
+                {event.image ? (
+                  <View style={styles.imageWrap}>
+                    <Image source={{ uri: event.image }} style={styles.bgImage} contentFit="cover" />
+                    <View style={styles.overlay} />
+                    <View style={styles.imageText}>
+                      <ThemedText type="defaultSemiBold" style={{ color: '#f8fafc' }}>
+                        {event.title}
+                      </ThemedText>
+                      {event.date ? <ThemedText style={{ color: '#e2e8f0' }}>{event.date}</ThemedText> : null}
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    <ThemedText type="defaultSemiBold">{event.title}</ThemedText>
+                    {event.date ? <ThemedText style={{ color: muted }}>{event.date}</ThemedText> : null}
+                  </>
+                )}
               </TouchableOpacity>
             ))}
             {events.length === 0 ? (
@@ -145,7 +159,27 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: 1.5,
     borderRadius: 12,
-    padding: 12,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  imageWrap: {
+    height: 160,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  bgImage: {
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  imageText: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    right: 10,
     gap: 4,
   },
   loading: {

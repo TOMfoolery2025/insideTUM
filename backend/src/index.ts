@@ -67,6 +67,7 @@ type TumEvent = {
   title: string;
   date?: string;
   url?: string;
+  image?: string;
 };
 
 function isHttpUrl(value: string) {
@@ -266,36 +267,55 @@ app.get('/api/tum-events', async (_req, res) => {
     const $ = load(response.data);
     const events: TumEvent[] = [];
 
-    $('article, li, .event, .event-item')
-      .slice(0, 15)
-      .each((_, el) => {
-        if (events.length >= 5) return;
-        const container = $(el);
+    const seen = new Set<string>();
+    const links = $('a[href*="/event/"]')
+      .slice(0, 30)
+      .toArray()
+      .map((linkEl) => {
+        const href = $(linkEl).attr('href');
+        const absolute = toAbsoluteUrl(href, EVENTS_URL);
+        if (!absolute || seen.has(absolute)) return null;
+        seen.add(absolute);
+        const container = $(linkEl).closest('article, li, .event, .event-item, .event-list__item');
         const title =
-          container.find('h3').first().text().trim() ||
-          container.find('h2').first().text().trim() ||
-          container.find('a').first().text().trim();
-        if (!title) return;
-
+          container.find('h3, h2, .event-title').first().text().trim() ||
+          $(linkEl).text().trim();
+        if (!title) return null;
         const date =
           container.find('time').attr('datetime') ||
           container.find('time').text().trim() ||
-          container.find('.date').first().text().trim() ||
+          container.find('.date, .event-date').first().text().trim() ||
           undefined;
+        return { title, date, url: absolute };
+      })
+      .filter(Boolean) as TumEvent[];
 
-        const href = container.find('a').first().attr('href');
+    const limited = links.slice(0, 5);
 
-        events.push({
-          title,
-          date,
-          url: toAbsoluteUrl(href, EVENTS_URL),
-        });
-      });
+    // Fetch images from event detail pages (best-effort).
+    const withImages = await Promise.all(
+      limited.map(async (event) => {
+        if (!event.url) return event;
+        try {
+          const detail = await axios.get(event.url, {
+            headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml' },
+            timeout: 8000,
+          });
+          const $$ = load(detail.data);
+          const ogImage = $$('meta[property="og:image"]').attr('content');
+          const hero = $$('img').first().attr('src');
+          const image = toAbsoluteUrl(ogImage || hero, event.url);
+          return { ...event, image };
+        } catch {
+          return event;
+        }
+      }),
+    );
 
     return res.json({
       source: EVENTS_URL,
-      count: events.length,
-      events: events.slice(0, 5),
+      count: withImages.length,
+      events: withImages,
     });
   } catch (err) {
     console.error('Failed to fetch TUM events', err);
