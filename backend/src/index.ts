@@ -2,11 +2,14 @@ import axios from 'axios';
 import { load } from 'cheerio';
 import cors from 'cors';
 import express from 'express';
+import jwt from 'jsonwebtoken';
+import { randomUUID } from 'node:crypto';
 import { URL } from 'node:url';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-super-secret-change-me';
 const USER_AGENT = 'TomfooleryCrawler/1.0 (+https://example.com)';
 
 const allowedOrigins = FRONTEND_ORIGIN.split(',').map((origin) => origin.trim());
@@ -16,6 +19,31 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+
+type User = {
+  id: string;
+  tumId: string | null;
+  email: string;
+  fullName: string;
+  faculty: string | null;
+  semester?: number | null;
+  profileSlug: string;
+  authProvider: 'mock' | 'tum';
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type AuthenticatedRequest = express.Request & { user?: User };
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+    }
+  }
+}
+
+const users: User[] = [];
 
 type CrawlPage = {
   url: string;
@@ -46,6 +74,59 @@ function isHttpUrl(value: string) {
     return parsed.protocol === 'http:' || parsed.protocol === 'https:';
   } catch {
     return false;
+  }
+}
+
+function slugify(value: string) {
+  const base = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 32);
+  const suffix = Math.random().toString(36).slice(2, 6);
+  return `${base || 'student'}-${suffix}`;
+}
+
+function sanitizeUser(user: User) {
+  return {
+    ...user,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
+
+function issueToken(user: User) {
+  return jwt.sign(
+    {
+      sub: user.id,
+      email: user.email,
+      provider: user.authProvider,
+    },
+    JWT_SECRET,
+    { expiresIn: '7d' },
+  );
+}
+
+function authMiddleware(req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) {
+  const header = req.headers.authorization;
+  const token = header?.startsWith('Bearer ') ? header.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Missing Bearer token' });
+  }
+
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
+    const user = users.find((u) => u.id === payload.sub);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid token user' });
+    }
+
+    req.user = user;
+    return next();
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'Invalid token';
+    return res.status(401).json({ error: reason });
   }
 }
 
@@ -149,6 +230,56 @@ app.get('/', (_req, res) => {
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Backend is running' });
+});
+
+app.post('/auth/mock-login', (req, res) => {
+  const { email, fullName, tumId = null, faculty = null, semester = null } = req.body ?? {};
+
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+  if (!fullName || typeof fullName !== 'string') {
+    return res.status(400).json({ error: 'Full name is required' });
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  let existing = users.find((u) => u.email === normalizedEmail);
+  const normalizedSemester =
+    semester === undefined || semester === null || semester === ''
+      ? null
+      : Number(semester);
+
+  if (!existing) {
+    existing = {
+      id: randomUUID(),
+      tumId: tumId ? String(tumId) : null,
+      email: normalizedEmail,
+      fullName: fullName.trim(),
+      faculty: faculty ? String(faculty) : null,
+      semester: Number.isNaN(normalizedSemester) ? null : normalizedSemester,
+      profileSlug: slugify(fullName),
+      authProvider: 'mock',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    users.push(existing);
+  } else {
+    existing.fullName = fullName.trim();
+    existing.tumId = tumId ? String(tumId) : null;
+    existing.faculty = faculty ? String(faculty) : null;
+    existing.semester = Number.isNaN(normalizedSemester) ? null : normalizedSemester;
+    existing.updatedAt = new Date();
+  }
+
+  const token = issueToken(existing);
+  return res.json({ token, user: sanitizeUser(existing) });
+});
+
+app.get('/me', authMiddleware, (req: AuthenticatedRequest, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  return res.json({ user: sanitizeUser(req.user) });
 });
 
 app.post('/api/scrape', async (req, res) => {

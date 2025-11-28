@@ -10,14 +10,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
+const TOKEN_KEY = 'tum-mock-token';
 
 type ScrapeResponse = {
   url: string;
@@ -33,9 +34,36 @@ type ScrapeResponse = {
   error?: string;
 };
 
+type User = {
+  id: string;
+  tumId: string | null;
+  email: string;
+  fullName: string;
+  faculty: string | null;
+  semester?: number | null;
+  profileSlug: string;
+  authProvider: 'mock' | 'tum';
+  createdAt: string;
+  updatedAt: string;
+};
+
+type AuthResponse = {
+  token: string;
+  user: User;
+};
+
 export default function ScrapeScreen() {
   const [health, setHealth] = useState<'loading' | 'ok' | 'error'>('loading');
   const [healthMsg, setHealthMsg] = useState('Checking backend…');
+  const [token, setToken] = useState<string | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [tumId, setTumId] = useState('');
+  const [faculty, setFaculty] = useState('');
 
   const [scrapeUrl, setScrapeUrl] = useState('');
   const [scrapeLoading, setScrapeLoading] = useState(false);
@@ -61,6 +89,87 @@ export default function ScrapeScreen() {
         setHealthMsg(err instanceof Error ? err.message : 'Failed to reach backend');
       });
   }, []);
+
+  const fetchProfile = async (authToken: string) => {
+    setProfileLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/me`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `HTTP ${response.status}`);
+      }
+      const data = (await response.json()) as { user: User };
+      setProfile(data.user);
+      setAuthError(null);
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : 'Failed to load profile');
+      setProfile(null);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      const saved = await SecureStore.getItemAsync(TOKEN_KEY);
+      if (saved) {
+        setToken(saved);
+        fetchProfile(saved);
+      }
+    })();
+  }, []);
+
+  const onLogin = async () => {
+    const safeEmail = email.trim();
+    const safeName = fullName.trim();
+    if (!safeEmail || !safeName) {
+      setAuthError('Enter your TUM email and full name.');
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthError(null);
+
+    try {
+      const response = await fetch(`${API_URL}/auth/mock-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: safeEmail,
+          fullName: safeName,
+          tumId: tumId.trim() || null,
+          faculty: faculty.trim() || null,
+        }),
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `HTTP ${response.status}`);
+      }
+      const data = (await response.json()) as AuthResponse;
+      setToken(data.token);
+      setProfile(data.user);
+      await SecureStore.setItemAsync(TOKEN_KEY, data.token);
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const onRefreshProfile = () => {
+    if (token) {
+      fetchProfile(token);
+    }
+  };
+
+  const onLogout = async () => {
+    setToken(null);
+    setProfile(null);
+    setAuthError(null);
+    await SecureStore.deleteItemAsync(TOKEN_KEY);
+  };
 
   const openLink = async (url: string) => {
     try {
@@ -120,6 +229,150 @@ export default function ScrapeScreen() {
               <ThemedText style={{ fontWeight: '600' }}>{healthMsg}</ThemedText>
             </View>
             <ThemedText style={{ color: muted, fontSize: 13 }}>API: {API_URL}</ThemedText>
+          </View>
+
+          <View style={[styles.card, { borderColor: border }]}>
+            <ThemedText type="subtitle">Login with TUM (Prototype)</ThemedText>
+            <ThemedText style={{ color: muted }}>
+              Mock login issues a JWT and student profile. Ready to swap with real OIDC later.
+            </ThemedText>
+            <View style={styles.inputRow}>
+              <View style={styles.field}>
+                <ThemedText type="defaultSemiBold">Full name</ThemedText>
+                <TextInput
+                  style={[styles.input, { borderColor: border, color: text }]}
+                  placeholder="Mia Schmidt"
+                  placeholderTextColor={muted}
+                  value={fullName}
+                  onChangeText={setFullName}
+                  autoCapitalize="words"
+                />
+              </View>
+              <View style={styles.field}>
+                <ThemedText type="defaultSemiBold">TUM email</ThemedText>
+                <TextInput
+                  style={[styles.input, { borderColor: border, color: text }]}
+                  placeholder="mia.schmidt@tum.de"
+                  placeholderTextColor={muted}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+            </View>
+            <View style={styles.inputRow}>
+              <View style={styles.field}>
+                <ThemedText type="defaultSemiBold">TUM ID (optional)</ThemedText>
+                <TextInput
+                  style={[styles.input, { borderColor: border, color: text }]}
+                  placeholder="ga12abc"
+                  placeholderTextColor={muted}
+                  value={tumId}
+                  onChangeText={setTumId}
+                  autoCapitalize="none"
+                />
+              </View>
+              <View style={styles.field}>
+                <ThemedText type="defaultSemiBold">Faculty (optional)</ThemedText>
+                <TextInput
+                  style={[styles.input, { borderColor: border, color: text }]}
+                  placeholder="CIT, SOM, MW, EDU…"
+                  placeholderTextColor={muted}
+                  value={faculty}
+                  onChangeText={setFaculty}
+                  autoCapitalize="characters"
+                />
+              </View>
+            </View>
+            <View style={styles.authActions}>
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: accent }]}
+                onPress={onLogin}
+                disabled={authLoading}
+              >
+                {authLoading ? (
+                  <ActivityIndicator color="#f8fafc" />
+                ) : (
+                  <ThemedText style={styles.buttonText}>Login with TUM (Prototype)</ThemedText>
+                )}
+              </TouchableOpacity>
+              {token ? (
+                <TouchableOpacity
+                  style={[styles.outlineButton, { borderColor: border }]}
+                  onPress={onRefreshProfile}
+                  disabled={profileLoading}
+                >
+                  <ThemedText style={[styles.outlineText, { color: text }]}>
+                    {profileLoading ? 'Refreshing…' : 'Refresh /me'}
+                  </ThemedText>
+                </TouchableOpacity>
+              ) : null}
+              {token ? (
+                <TouchableOpacity style={styles.dangerButton} onPress={onLogout}>
+                  <ThemedText style={styles.dangerText}>Log out</ThemedText>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+            {authError ? (
+              <ThemedText style={[styles.error, { color: error }]}>Auth error: {authError}</ThemedText>
+            ) : null}
+            <View style={[styles.resultCard, { borderColor: border }]}>
+              <View style={styles.statusRow}>
+                <View
+                  style={[
+                    styles.pill,
+                    {
+                      backgroundColor: token ? 'rgba(34, 197, 94, 0.12)' : 'rgba(148, 163, 184, 0.12)',
+                      borderColor: token ? 'rgba(34, 197, 94, 0.45)' : border,
+                    },
+                  ]}
+                >
+                  <View style={[styles.dotSmall, token ? styles.dotOk : styles.dotError]} />
+                  <ThemedText style={{ fontWeight: '700', color: token ? '#0f172a' : muted }}>
+                    {token ? 'JWT stored' : 'No session'}
+                  </ThemedText>
+                </View>
+                {token ? (
+                  <ThemedText style={{ color: muted, fontSize: 12 }}>
+                    {token.slice(0, 26)}…
+                  </ThemedText>
+                ) : null}
+              </View>
+              {profileLoading ? (
+                <ThemedText style={{ color: muted }}>Loading profile…</ThemedText>
+              ) : profile ? (
+                <View style={styles.profileGrid}>
+                  <View>
+                    <ThemedText style={styles.label}>Name</ThemedText>
+                    <ThemedText type="defaultSemiBold">{profile.fullName}</ThemedText>
+                  </View>
+                  <View>
+                    <ThemedText style={styles.label}>Email</ThemedText>
+                    <ThemedText>{profile.email}</ThemedText>
+                  </View>
+                  <View>
+                    <ThemedText style={styles.label}>Faculty</ThemedText>
+                    <ThemedText>{profile.faculty || '—'}</ThemedText>
+                  </View>
+                  <View>
+                    <ThemedText style={styles.label}>Profile slug</ThemedText>
+                    <ThemedText>{profile.profileSlug}</ThemedText>
+                  </View>
+                  <View>
+                    <ThemedText style={styles.label}>Provider</ThemedText>
+                    <ThemedText style={{ fontWeight: '700' }}>{profile.authProvider}</ThemedText>
+                  </View>
+                  <View>
+                    <ThemedText style={styles.label}>Created</ThemedText>
+                    <ThemedText>{new Date(profile.createdAt).toLocaleString()}</ThemedText>
+                  </View>
+                </View>
+              ) : (
+                <ThemedText style={{ color: muted }}>Sign in to load /me payload.</ThemedText>
+              )}
+            </View>
           </View>
 
           <View style={[styles.card, { borderColor: border }]}>
@@ -248,6 +501,15 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 10,
   },
+  inputRow: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  field: {
+    flex: 1,
+    gap: 6,
+  },
   input: {
     borderWidth: 1,
     borderRadius: 10,
@@ -260,6 +522,33 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#f8fafc',
+    fontWeight: '700',
+  },
+  authActions: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  outlineButton: {
+    borderWidth: 1.2,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  outlineText: {
+    fontWeight: '700',
+  },
+  dangerButton: {
+    borderWidth: 1.2,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderColor: '#fecdd3',
+    backgroundColor: 'rgba(248, 113, 113, 0.08)',
+  },
+  dangerText: {
+    color: '#b91c1c',
     fontWeight: '700',
   },
   error: {
@@ -288,5 +577,28 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: 4,
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  dotSmall: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  profileGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  label: {
+    color: '#64748b',
+    fontSize: 13,
   },
 });

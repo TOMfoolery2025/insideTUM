@@ -178,8 +178,7 @@ p {
   font-weight: 600;
 }
 
-.field input[type='url'],
-.field input[type='number'] {
+.field input {
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -222,6 +221,87 @@ button[type='submit']:disabled {
 
 button[type='submit']:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+.auth-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  padding: 11px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ghost.danger {
+  border-color: #fecdd3;
+  color: #b91c1c;
+}
+
+.auth-status {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(37, 99, 235, 0.01));
+}
+
+.status-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pill-live {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.pill-idle {
+  background: rgba(148, 163, 184, 0.15);
+  color: #475569;
+}
+
+.token-pill {
+  background: var(--code-bg);
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.profile-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-top: 10px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .crawl-results {

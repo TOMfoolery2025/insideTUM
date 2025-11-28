@@ -1,12 +1,35 @@
 import { FormEvent, useEffect, useState } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
+const TOKEN_KEY = 'tum-mock-token';
+
+type User = {
+  id: string;
+  tumId: string | null;
+  email: string;
+  fullName: string;
+  faculty: string | null;
+  semester?: number | null;
+  profileSlug: string;
+  authProvider: 'mock' | 'tum';
+  createdAt: string;
+  updatedAt: string;
+};
 
 function App() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [statusOpen, setStatusOpen] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [profile, setProfile] = useState<User | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [tumId, setTumId] = useState('');
+  const [faculty, setFaculty] = useState('');
   const [crawlUrl, setCrawlUrl] = useState('');
   const [crawlResult, setCrawlResult] = useState<{
     startUrl: string;
@@ -72,6 +95,94 @@ function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  const fetchProfile = async (authToken: string) => {
+    setProfileLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/me`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `Request failed: ${response.status}`);
+      }
+      const data = (await response.json()) as { user: User };
+      setProfile(data.user);
+      setAuthError(null);
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'Failed to fetch profile';
+      setAuthError(reason);
+      setProfile(null);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null;
+    if (saved) {
+      setToken(saved);
+      fetchProfile(saved);
+    }
+  }, []);
+
+  const handleLogin = async (evt: FormEvent<HTMLFormElement>) => {
+    evt.preventDefault();
+    const safeEmail = email.trim();
+    const safeName = fullName.trim();
+
+    if (!safeEmail || !safeName) {
+      setAuthError('Please enter your email and full name.');
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthError(null);
+
+    try {
+      const response = await fetch(`${API_URL}/auth/mock-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: safeEmail,
+          fullName: safeName,
+          tumId: tumId.trim() || null,
+          faculty: faculty.trim() || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `Request failed: ${response.status}`);
+      }
+
+      const data = (await response.json()) as { token: string; user: User };
+      setToken(data.token);
+      setProfile(data.user);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(TOKEN_KEY, data.token);
+      }
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'Login failed';
+      setAuthError(reason);
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    setProfile(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(TOKEN_KEY);
+    }
+  };
+
+  const handleRefreshProfile = () => {
+    if (token) {
+      fetchProfile(token);
+    }
+  };
 
   const handleCrawl = async (evt: FormEvent<HTMLFormElement>) => {
     evt.preventDefault();
@@ -179,6 +290,118 @@ function App() {
         ) : null}
 
         <div className="cards">
+          <div className="card auth-card">
+            <h2>Login with TUM (Prototype)</h2>
+            <p>Mock login endpoint that mirrors the future OIDC shape. We issue a JWT and create the student profile.</p>
+            <form className="crawl-form" onSubmit={handleLogin} noValidate>
+              <div className="field-grid">
+                <label className="field">
+                  <span>Full name</span>
+                  <input
+                    type="text"
+                    placeholder="Mia Schmidt"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  <span>TUM email</span>
+                  <input
+                    type="email"
+                    placeholder="mia.schmidt@tum.de"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </label>
+              </div>
+              <div className="field-grid">
+                <label className="field">
+                  <span>TUM ID (optional)</span>
+                  <input
+                    type="text"
+                    placeholder="e.g. ga12abc"
+                    value={tumId}
+                    onChange={(e) => setTumId(e.target.value)}
+                  />
+                </label>
+                <label className="field">
+                  <span>Faculty (optional)</span>
+                  <input
+                    type="text"
+                    placeholder="CIT, SOM, MW, EDU…"
+                    value={faculty}
+                    onChange={(e) => setFaculty(e.target.value)}
+                  />
+                </label>
+              </div>
+              <div className="auth-actions">
+                <button type="submit" disabled={authLoading}>
+                  {authLoading ? 'Signing in…' : 'Login with TUM (Prototype)'}
+                </button>
+                {token ? (
+                  <button
+                    type="button"
+                    className="ghost"
+                    onClick={handleRefreshProfile}
+                    disabled={profileLoading}
+                  >
+                    {profileLoading ? 'Refreshing…' : 'Refresh /me'}
+                  </button>
+                ) : null}
+                {token ? (
+                  <button type="button" className="ghost danger" onClick={handleLogout}>
+                    Log out
+                  </button>
+                ) : null}
+              </div>
+            </form>
+            {authError ? (
+              <div className="error">
+                <strong>Auth error:</strong> {authError}
+              </div>
+            ) : null}
+            <div className="auth-status">
+              <div className="status-row">
+                <span className={`pill ${token ? 'pill-live' : 'pill-idle'}`}>
+                  {token ? 'JWT stored' : 'No session'}
+                </span>
+                {token ? <code className="token-pill">{token.slice(0, 32)}…</code> : null}
+              </div>
+              {profileLoading ? (
+                <div className="muted">Loading profile…</div>
+              ) : profile ? (
+                <div className="profile-grid">
+                  <div>
+                    <div className="muted">Name</div>
+                    <strong>{profile.fullName}</strong>
+                  </div>
+                  <div>
+                    <div className="muted">Email</div>
+                    <code>{profile.email}</code>
+                  </div>
+                  <div>
+                    <div className="muted">Faculty</div>
+                    <span>{profile.faculty || '—'}</span>
+                  </div>
+                  <div>
+                    <div className="muted">Profile slug</div>
+                    <code>{profile.profileSlug}</code>
+                  </div>
+                  <div>
+                    <div className="muted">Provider</div>
+                    <span className="pill pill-live">{profile.authProvider}</span>
+                  </div>
+                  <div>
+                    <div className="muted">Created</div>
+                    <span>{new Date(profile.createdAt).toLocaleString()}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="muted">Authenticate to see /me payload here.</div>
+              )}
+            </div>
+          </div>
+
           <div className="card">
             <h2>Scrape a Page</h2>
             <p>Extract title, description, headings, and links from a single page.</p>
