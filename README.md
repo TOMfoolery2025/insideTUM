@@ -70,14 +70,13 @@ npm start                 # Expo dev server; set EXPO_PUBLIC_API_URL to LAN IP
 - **Expo production:** set `EXPO_PUBLIC_API_URL` to your Railway URL.
 
 ## Key API endpoints
-- `POST /auth/mock-login { email, fullName, tumId?, faculty? } -> { token, user }`
-- `GET /me` → current user
-- `GET /api/health`
-- `GET /api/tum-events` → top 5 events with images when available
-- `GET /api/mensa` → nearest-day menu `{ date, items[] }`
-- **Forum:** `GET /forum/posts`, `POST /forum/posts`, `GET /forum/posts/:id`, `POST /forum/posts/:id/comments`
-- **Meetups:** `GET /meetups`, `POST /meetups`, `POST /meetups/:id/join`, `POST /meetups/:id/leave`, `PUT /meetups/:id` (host only)
-- **Chats:** `GET /students`, `GET /chats`, `POST /chats { participantId }`, `GET /chats/:id/messages`, `POST /chats/:id/messages`
+- See `docs/api-reference.md` for concise request/response shapes.
+- Highlights:
+  - Auth: `/auth/mock-login`, `/me`
+  - Events/Mensa: `/api/tum-events`, `/api/mensa`
+  - Forum: posts + comments
+  - Meetups: create/edit/join/leave
+  - Messages: students, chats, chat messages
 
 ## Notes
 - Auth is JWT Bearer; clients store token in localStorage (web) or SecureStore (mobile).
