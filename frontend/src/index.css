@@ -337,3 +337,263 @@ code {
     grid-template-columns: 1fr;
   }
 }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab.active {
+  background: linear-gradient(135deg, var(--accent), #1d4ed8);
+  color: #f8fafc;
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2);
+}
+
+.section {
+  margin-top: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.cards-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.event-card {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 14px;
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--text);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-rows: 160px auto;
+}
+
+.event-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+
+.event-body {
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.event-body h3 {
+  font-size: 18px;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+}
+
+.list-row {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--card);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.list-row.align-start {
+  align-items: flex-start;
+}
+
+.list-row.clickable {
+  cursor: pointer;
+}
+
+.list-row.clickable:hover {
+  box-shadow: var(--shadow);
+}
+
+.list-main {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+}
+
+.list-title {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.list-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: flex-end;
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.chip {
+  border-radius: 999px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  background: rgba(148, 163, 184, 0.15);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.chip.active {
+  background: linear-gradient(135deg, var(--accent), #1d4ed8);
+  color: #f8fafc;
+  border-color: transparent;
+}
+
+.chip.soft {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.list .truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ghost {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.right {
+  display: grid;
+  gap: 6px;
+  justify-items: flex-end;
+}
+
+.section textarea,
+.section input,
+textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+}
+
+.messages-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.chat-list {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  max-height: 520px;
+  overflow: auto;
+}
+
+.chat-panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 12px;
+  min-height: 320px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message-list {
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+  padding: 4px;
+}
+
+.bubble {
+  max-width: 70%;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.bubble.mine {
+  margin-left: auto;
+  background: #dbeafe;
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.bubble.theirs {
+  margin-right: auto;
+}
+
+.chat-input {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.chat-input button {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent), #1d4ed8);
+  color: #f8fafc;
+  cursor: pointer;
+}
+
+@media (max-width: 960px) {
+  .messages-layout {
+    grid-template-columns: 1fr;
+  }
+}
