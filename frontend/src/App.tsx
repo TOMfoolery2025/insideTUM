@@ -330,7 +330,14 @@ function LoginPage() {
           </label>
           <label className="field">
             <span>Faculty</span>
-            <select value={faculty} onChange={(e) => { const val = e.target.value as 'CIT' | 'SOM' | ''; setFaculty(val); setProgram(''); }} required>
+            <select
+              value={faculty}
+              onChange={(e) => {
+                const val = e.target.value as 'CIT' | 'SOM' | '';
+                setFaculty(val);
+              }}
+              required
+            >
               <option value="">Select faculty</option>
               <option value="CIT">CIT</option>
               <option value="SOM">SOM</option>
