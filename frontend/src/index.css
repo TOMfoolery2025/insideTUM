@@ -533,6 +533,7 @@ textarea {
   background: var(--card);
   padding: 12px;
   min-height: 320px;
+  max-height: 70vh;
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: 10px;

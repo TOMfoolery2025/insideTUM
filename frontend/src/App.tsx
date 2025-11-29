@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -1041,6 +1042,7 @@ function MessagesPage() {
   const [newMessage, setNewMessage] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const messageListRef = useRef<HTMLDivElement | null>(null);
 
   const authHeaders = useMemo(
     () => ({
@@ -1088,6 +1090,12 @@ function MessagesPage() {
     loadStudents();
     loadChats();
   }, [loadStudents, loadChats]);
+
+  useEffect(() => {
+    if (messageListRef.current && selectedChat) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }
+  }, [messages, selectedChat]);
 
   useEffect(() => {
     if (!token) return;
@@ -1222,7 +1230,7 @@ function MessagesPage() {
                     Close
                   </button>
                 </div>
-                <div className="message-list">
+                <div className="message-list" ref={messageListRef}>
                   {messages.map((msg) => {
                     const isMine = msg.sender.id === user?.id;
                     return (
