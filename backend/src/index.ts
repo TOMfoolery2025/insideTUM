@@ -175,6 +175,7 @@ async function scrapeMensaMenu() {
       pasta: 'pasta',
       lasagne: 'lasagna',
       gnocchi: 'gnocchi',
+      maultaschen: 'swabian dumplings',
     };
     return input
       .split(/\s+/)
@@ -215,34 +216,40 @@ async function scrapeMensaMenu() {
     });
     const $ = load(response.data);
     const items: MensaItem[] = [];
-    let date = new Date().toISOString().slice(0, 10);
+    let date = nextWeekdayIso();
 
-    $('time').first().each((_, el) => {
-      const d = $(el).attr('datetime') || $(el).text().trim();
-      if (d) date = d;
-    });
+    const headerText = $('h2:contains("Speiseplan")').first().text().trim();
+    const dateMatch = headerText.match(/(\d{2}\.\d{2}\.\d{4})/);
+    if (dateMatch) {
+      const [day, month, year] = dateMatch[1].split('.');
+      date = new Date(Number(year), Number(month) - 1, Number(day)).toISOString().slice(0, 10);
+    }
 
+    let currentType: MensaItem['type'] = 'other';
     $('table tbody tr')
-      .slice(0, 8)
+      .slice(0, 20)
       .each((_, el) => {
         const cols = $(el).find('td');
-        if (cols.length < 2) return;
-        const title = cols.eq(0).text().trim();
-        const price = cols.eq(1).text().trim();
-        if (!title) return;
-        const lower = title.toLowerCase();
-        let type: MensaItem['type'] = 'other';
-        if (lower.includes('vegan')) type = 'vegan';
-        else if (lower.includes('vegetarisch')) type = 'veg';
-        else if (lower.includes('fisch')) type = 'fish';
-        else if (lower.includes('rind')) type = 'meat';
-        else if (lower.includes('hähnchen') || lower.includes('pute') || lower.includes('schwein')) type = 'meat';
+        if (!cols.length) return;
+        const raw = cols.eq(0).text().trim();
+        if (!raw) return;
 
+        const lower = raw.toLowerCase();
+        if (lower.includes('ausgabe')) {
+          if (lower.includes('vegan')) currentType = 'vegan';
+          else if (lower.includes('vegetar')) currentType = 'veg';
+          else if (lower.includes('fisch')) currentType = 'fish';
+          else if (lower.includes('tierisch') || lower.includes('dessert') || lower.includes('suppentopf')) currentType = 'meat';
+          else currentType = 'other';
+          return;
+        }
+
+        const price = cols.eq(2).text().trim() || cols.eq(1).text().trim() || undefined;
         items.push({
-          name: translate(title),
+          name: translate(raw),
           side: undefined,
           price,
-          type,
+          type: currentType,
         });
       });
 
