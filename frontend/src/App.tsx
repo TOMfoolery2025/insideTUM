@@ -1067,12 +1067,11 @@ function MessagesPage() {
   }, [authHeaders, token]);
 
   const loadMessages = useCallback(
-    (chatId: string) => {
+    (chatId: string, force = false) => {
       if (!token) return;
       const cached = messageCache[chatId];
-      if (cached) {
+      if (cached && !force) {
         setMessages(cached);
-        return;
       }
       fetch(`${API_URL}/chats/${chatId}/messages`, { headers: authHeaders })
         .then((res) => res.json())
@@ -1089,6 +1088,19 @@ function MessagesPage() {
     loadStudents();
     loadChats();
   }, [loadStudents, loadChats]);
+
+  useEffect(() => {
+    if (!token) return;
+    const chatTimer = setInterval(() => loadChats(), 5000);
+    return () => clearInterval(chatTimer);
+  }, [loadChats, token]);
+
+  useEffect(() => {
+    if (!token || !selectedChat) return;
+    loadMessages(selectedChat.id, true);
+    const msgTimer = setInterval(() => loadMessages(selectedChat.id, true), 4000);
+    return () => clearInterval(msgTimer);
+  }, [loadMessages, selectedChat, token]);
 
   const startChat = async () => {
     if (!selectedStudent || !token) return;
