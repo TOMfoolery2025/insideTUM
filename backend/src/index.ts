@@ -14,7 +14,7 @@ const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-super-secret-change-me';
 const DATABASE_URL = process.env.DATABASE_URL;
 const USER_AGENT = 'TomfooleryCrawler/1.0 (+https://example.com)';
-const MENSA_URL = process.env.MENSA_URL || 'https://tum-confluence-mensa-placeholder.example'; // replace with real source when available
+const MENSA_URL = process.env.MENSA_URL || 'https://www.imensa.de/heilbronn/mensa-am-bildungscampus/index.html';
 if (!DATABASE_URL) {
   throw new Error('DATABASE_URL is required for Prisma');
 }
@@ -145,6 +145,48 @@ function toAbsoluteUrl(href: string | undefined, base: string) {
 }
 
 async function scrapeMensaMenu() {
+  const translateWord = (input: string) => {
+    const map: Record<string, string> = {
+      rind: 'beef',
+      schweine: 'pork',
+      hähnchen: 'chicken',
+      pute: 'turkey',
+      fisch: 'fish',
+      vegetarisch: 'vegetarian',
+      vegan: 'vegan',
+      salat: 'salad',
+      nudeln: 'pasta',
+      kartoffel: 'potato',
+      suppe: 'soup',
+      curry: 'curry',
+      reis: 'rice',
+      tofu: 'tofu',
+      chili: 'chili',
+      burger: 'burger',
+      schnitzel: 'schnitzel',
+      gemüse: 'vegetables',
+      käse: 'cheese',
+      tomate: 'tomato',
+      pommes: 'fries',
+      rahm: 'cream',
+      paprika: 'pepper',
+      brot: 'bread',
+      bowl: 'bowl',
+      pasta: 'pasta',
+      lasagne: 'lasagna',
+      gnocchi: 'gnocchi',
+    };
+    return input
+      .split(/\s+/)
+      .map((word) => {
+        const key = word.toLowerCase().replace(/[.,:;()]/g, '');
+        return map[key] ? map[key] : word;
+      })
+      .join(' ');
+  };
+
+  const translate = (text: string) => translateWord(text);
+
   const nextWeekdayIso = () => {
     const d = new Date();
     while (d.getDay() === 0 || d.getDay() === 6) {
@@ -180,15 +222,28 @@ async function scrapeMensaMenu() {
       if (d) date = d;
     });
 
-    $('.menu-item, li, .dish')
+    $('table tbody tr')
       .slice(0, 8)
       .each((_, el) => {
-        const title = $(el).find('.title').text().trim() || $(el).find('strong').first().text().trim() || $(el).text().trim();
+        const cols = $(el).find('td');
+        if (cols.length < 2) return;
+        const title = cols.eq(0).text().trim();
+        const price = cols.eq(1).text().trim();
         if (!title) return;
-        const side = $(el).find('.description, .side').text().trim() || undefined;
-        const price = $(el).find('.price').text().trim() || undefined;
-        const type = $(el).attr('data-type') as MensaItem['type'];
-        items.push({ name: title, side, price, type });
+        const lower = title.toLowerCase();
+        let type: MensaItem['type'] = 'other';
+        if (lower.includes('vegan')) type = 'vegan';
+        else if (lower.includes('vegetarisch')) type = 'veg';
+        else if (lower.includes('fisch')) type = 'fish';
+        else if (lower.includes('rind')) type = 'meat';
+        else if (lower.includes('hähnchen') || lower.includes('pute') || lower.includes('schwein')) type = 'meat';
+
+        items.push({
+          name: translate(title),
+          side: undefined,
+          price,
+          type,
+        });
       });
 
     if (!items.length) return fallback;
